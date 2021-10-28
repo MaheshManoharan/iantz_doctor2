@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_firestore_demo/screens/doc/doc_login_screen.dart';
 import 'package:flutter_firestore_demo/screens/user_booking_history.dart';
 import 'package:flutter_firestore_demo/services/auth_service.dart';
 
@@ -109,9 +110,12 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           ElevatedButton(
-            onPressed: () 
-            {
-              
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const DocLoginScreen(),
+                ),
+              );
             },
             child: const Text('Are you a doctor?'),
           ),

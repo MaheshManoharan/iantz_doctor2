@@ -2,7 +2,17 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class UserBookingHistory extends StatelessWidget {
+class DoctorAppointmentScreen extends StatefulWidget {
+  final doctorid;
+
+  const DoctorAppointmentScreen({Key? key, this.doctorid}) : super(key: key);
+
+  @override
+  State<DoctorAppointmentScreen> createState() =>
+      _DoctorAppointmentScreenState();
+}
+
+class _DoctorAppointmentScreenState extends State<DoctorAppointmentScreen> {
   FirebaseAuth firebaseAuth = FirebaseAuth.instance;
 
   @override
@@ -14,19 +24,14 @@ class UserBookingHistory extends StatelessWidget {
           stream: FirebaseFirestore.instance
               .collection('appointments')
               .where(
-                'userid',
-                isEqualTo: firebaseAuth.currentUser!.uid,
+                'doctorid',
+                isEqualTo: widget.doctorid,
               )
               .snapshots(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return Center(
                 child: CircularProgressIndicator(),
-              );
-            }
-            if (snapshot.data!.docs.isEmpty) {
-              return Center(
-                child: Text('no bookings'),
               );
             }
 
@@ -38,14 +43,13 @@ class UserBookingHistory extends StatelessWidget {
                   Timestamp t = doc['day'];
                   DateTime d = t.toDate();
 
-                  //var date = DateTime.fromMicrosecondsSinceEpoch(doc['day'].toDate().toString());
                   return Card(
                     child: Column(
                       children: [
                         Text(doc['userid']),
                         Text(doc['doctorid']),
                         Text(doc['name']),
-                        Text(d.toString()),
+                        Text(d.toString())
                         // Text(
                         //     '${DateTime.fromMicrosecondsSinceEpoch(doc['day'])}'),
                       ],

@@ -16,6 +16,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   DateTime selectedDay = DateTime.now();
   DateTime focusedDay = DateTime.now();
 
+  DateTime? appointmentDate;
   FirebaseAuth firebaseAuth = FirebaseAuth.instance;
   FirebaseFirestore firestore = FirebaseFirestore.instance;
 
@@ -29,6 +30,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
             onDaySelected: (selecctDay, focussedDay) {
               setState(() {
                 selectedDay = selecctDay;
+                appointmentDate = selecctDay;
                 //  finalAppointment = selecctDay;
                 focusedDay = focussedDay;
               });
@@ -55,37 +57,48 @@ class _CalendarScreenState extends State<CalendarScreen> {
               CollectionReference appointment =
                   firestore.collection('appointments');
 
-              QuerySnapshot allresults = await FirebaseFirestore.instance
-                  .collection('appointments')
-                  .where('day', isEqualTo: selectedDay)
-                  .where('doctorid', isEqualTo: widget.doctorid)
-                  .get();
-
-              if (allresults.docs.isEmpty) {
-                User? user = firebaseAuth.currentUser;
-                String userid = user!.uid;
-
-                await appointment.add({
-                  'userid': userid,
-                  'day': selectedDay,
-                  'doctorid': widget.doctorid,
-                }).then((value) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('appointment set'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                });
-              }
-
-              if (allresults.docs.isNotEmpty) {
+              if (appointmentDate == null) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Already someone appointed'),
+                    content:
+                        Text('You should tap the date which you want to book'),
                     backgroundColor: Colors.red,
                   ),
                 );
+              } else {
+                QuerySnapshot allresults = await FirebaseFirestore.instance
+                    .collection('appointments')
+                    .where('day', isEqualTo: selectedDay)
+                    .where('doctorid', isEqualTo: widget.doctorid)
+                    .get();
+
+                if (allresults.docs.isEmpty) {
+                  User? user = firebaseAuth.currentUser;
+                  String userid = user!.uid;
+
+                  await appointment.add({
+                    'userid': userid,
+                    'day': selectedDay,
+                    'doctorid': widget.doctorid,
+                    'name': user.email,
+                  }).then((value) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('appointment set'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  });
+                }
+
+                if (allresults.docs.isNotEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Already someone appointed'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
               }
 
               // });
