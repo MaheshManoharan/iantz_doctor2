@@ -16,6 +16,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
   DateTime selectedDay = DateTime.now();
   DateTime focusedDay = DateTime.now();
 
+  bool loading = false;
+
   DateTime? appointmentDate;
   FirebaseAuth firebaseAuth = FirebaseAuth.instance;
   FirebaseFirestore firestore = FirebaseFirestore.instance;
@@ -52,59 +54,74 @@ class _CalendarScreenState extends State<CalendarScreen> {
           ),
           Text('Appointment day: $selectedDay'),
           Text('${widget.doctorid}'),
-          ElevatedButton(
-            onPressed: () async {
-              CollectionReference appointment =
-                  firestore.collection('appointments');
+          loading
+              ? CircularProgressIndicator()
+              : ElevatedButton(
+                  onPressed: () async {
+                    setState(() {
+                      loading = true;
+                    });
+                    CollectionReference appointment =
+                        firestore.collection('appointments');
 
-              if (appointmentDate == null) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content:
-                        Text('You should tap the date which you want to book'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              } else {
-                QuerySnapshot allresults = await FirebaseFirestore.instance
-                    .collection('appointments')
-                    .where('day', isEqualTo: selectedDay)
-                    .where('doctorid', isEqualTo: widget.doctorid)
-                    .get();
+                    if (appointmentDate == null) {
+                      setState(() {
+                        loading = false;
+                      });
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                              'You should tap the date which you want to book'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    } else {
+                      QuerySnapshot allresults = await FirebaseFirestore
+                          .instance
+                          .collection('appointments')
+                          .where('day', isEqualTo: selectedDay)
+                          .where('doctorid', isEqualTo: widget.doctorid)
+                          .get();
 
-                if (allresults.docs.isEmpty) {
-                  User? user = firebaseAuth.currentUser;
-                  String userid = user!.uid;
+                      if (allresults.docs.isEmpty) {
+                        User? user = firebaseAuth.currentUser;
+                        String userid = user!.uid;
 
-                  await appointment.add({
-                    'userid': userid,
-                    'day': selectedDay,
-                    'doctorid': widget.doctorid,
-                    'name': user.email,
-                  }).then((value) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('appointment set'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  });
-                }
+                        await appointment.add({
+                          'userid': userid,
+                          'day': selectedDay,
+                          'doctorid': widget.doctorid,
+                          'name': user.email,
+                        }).then((value) {
+                          setState(() {
+                            loading = false;
+                          });
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('appointment set'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        });
+                      }
 
-                if (allresults.docs.isNotEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Already someone appointed'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              }
+                      if (allresults.docs.isNotEmpty) {
+                        setState(() {
+                          loading = false;
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Already someone appointed'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    }
 
-              // });
-            },
-            child: const Text('set appointment'),
-          )
+                    // });
+                  },
+                  child: const Text('set appointment'),
+                )
         ],
       ),
     );
